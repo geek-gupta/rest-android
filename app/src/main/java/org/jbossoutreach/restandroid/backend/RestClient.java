@@ -15,25 +15,31 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RestClient {
 
-    public static ResponseService responseService;
+    private static ResponseService mRestService = null;
 
-    public RestClient() {
+    public static ResponseService getClient() {
+        if(mRestService == null) {
+            final OkHttpClient client = new OkHttpClient().newBuilder().addInterceptor(new FakeInterceptor()).build();
 
-        Gson gson = new GsonBuilder().create();
+            Gson gson = new GsonBuilder().setLenient()
+                    .create();
 
-        OkHttpClient.Builder okHttpBuilder = new OkHttpClient.Builder();
+            final Retrofit retrofit = new Retrofit.Builder()
+                    // Using custom Jackson Converter to parse JSON
+                    // Add dependencies:
+                    // com.squareup.retrofit:converter-jackson:2.0.0-beta2
+                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    // Endpoint
+                    .baseUrl(ResponseService.ENDPOINT)
+                    .client(client)
+                    .build();
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://google.com/")
-                .client(okHttpBuilder.build())
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build();
-
-        responseService = retrofit.create(ResponseService.class);
-
+            mRestService = retrofit.create(ResponseService.class);
+        }
+        return mRestService;
     }
 
-    public ResponseService getResponseService() {
-        return responseService;
-    }
+//    public ResponseService getResponseService() {
+//        return mResponseService;
+//    }
 }
